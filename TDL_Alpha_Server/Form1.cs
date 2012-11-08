@@ -25,6 +25,8 @@ namespace TDL_Alpha_Server
         private List<TDLPlayer> m_tdlPlayerList;
         private TDLServer m_tdlServer;
 
+        private String m_saveFolder = String.Empty;
+
         private bool m_worldSeedFound = false;
         
         private System.Threading.Timer m_timer;
@@ -43,6 +45,9 @@ namespace TDL_Alpha_Server
             m_upTimeTimer.Enabled = false;
             m_upTimeTimer.Interval = 1000;
             m_upTimeTimer.Tick += new EventHandler(m_upTimeTimer_Tick);
+
+            m_saveFolder = String.Format("{0}_{1}","TDLServer", DateTime.Now.ToFileTime());
+            Directory.CreateDirectory(m_saveFolder);
         }
 
         /// <summary>
@@ -80,7 +85,6 @@ namespace TDL_Alpha_Server
 
             try
             {
-
                 //Disbles the section hold the server options
                 m_options.Enabled = false;
 
@@ -268,6 +272,9 @@ namespace TDL_Alpha_Server
 
         private void m_serverStarter_FormClosing(object sender, FormClosingEventArgs e)
         {
+            File.WriteAllText(String.Format(@"{0}\{1}", m_saveFolder, "TDLServerLog.txt"), m_serverOutput.Text);
+            File.WriteAllText(String.Format(@"{0}\{1}", m_saveFolder, "TDLChatLog.txt"), m_chatLog.Text);
+
             m_tdlServer.Dispose();
         }
     }

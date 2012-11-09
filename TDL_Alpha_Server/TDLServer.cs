@@ -15,6 +15,7 @@ namespace TDL_Alpha_Server
     {
         private ProcessCaller m_processCaller = null;
         private String m_serverArguments = String.Empty;
+        private String m_saveFolder = String.Empty;
 
         public TDLServer(ISynchronizeInvoke guiApp)
         {
@@ -55,7 +56,33 @@ namespace TDL_Alpha_Server
             m_serverArguments = String.Format(" --{0} --maxplayers={1} --gamemode={2} --servername={3}", ServerType, MaxPlayers, Visibility, ServerName);
             m_processCaller.Arguments = m_serverArguments;
             m_processCaller.Start();
+            m_saveFolder = String.Format("{0}_{1}", "TDLServer", DateTime.Now.ToFileTime());
 
+            Directory.CreateDirectory(m_saveFolder);
+        }
+
+        /// <summary>
+        /// Writes the given chat log entry to the Chat Log created for this instance of the server.
+        /// </summary>
+        /// <param name="newChatLogEntry">Entry to write to the log</param>
+        public void UpdateChatLog(string newChatLogEntry)
+        {
+            if (m_saveFolder != String.Empty)
+            { 
+                File.AppendAllText(String.Format(@"{0}\{1}", m_saveFolder, "TDLChatLog.txt"), newChatLogEntry);
+            }
+        }
+
+        /// <summary>
+        /// Writes the given server log entry to the Server Log created for this instance of the server.
+        /// </summary>
+        /// <param name="newServerLogEntry">Entry to write to the log</param>
+        public void UpdateServerLog(string newServerLogEntry)
+        {
+            if (m_saveFolder != String.Empty)
+            {
+                File.AppendAllText(String.Format(@"{0}\{1}", m_saveFolder, "TDLServerLog.txt"), newServerLogEntry);
+            }
         }
 
         public void Dispose()

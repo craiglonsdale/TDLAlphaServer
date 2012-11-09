@@ -25,8 +25,6 @@ namespace TDL_Alpha_Server
         private List<TDLPlayer> m_tdlPlayerList;
         private TDLServer m_tdlServer;
 
-        private String m_saveFolder = String.Empty;
-
         private bool m_worldSeedFound = false;
         
         private System.Threading.Timer m_timer;
@@ -45,9 +43,6 @@ namespace TDL_Alpha_Server
             m_upTimeTimer.Enabled = false;
             m_upTimeTimer.Interval = 1000;
             m_upTimeTimer.Tick += new EventHandler(m_upTimeTimer_Tick);
-
-            m_saveFolder = String.Format("{0}_{1}","TDLServer", DateTime.Now.ToFileTime());
-            Directory.CreateDirectory(m_saveFolder);
         }
 
         /// <summary>
@@ -99,7 +94,7 @@ namespace TDL_Alpha_Server
 
                 m_tdlServer.Start();
 
-                m_timer = new System.Threading.Timer(new TimerCallback(DoSomething), null, 0, 1000);
+                m_timer = new System.Threading.Timer(new TimerCallback(ParseLogContents), null, 0, 1000);
             }
             catch(Exception ex)
             {
@@ -109,7 +104,7 @@ namespace TDL_Alpha_Server
         }
 
         private long m_previousFileLength = 0;
-        private void DoSomething(object obj)
+        private void ParseLogContents(object obj)
         {
             using (FileStream fs = File.Open("TDLServerLog.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
@@ -141,6 +136,9 @@ namespace TDL_Alpha_Server
                     FindChat(s);
 
                     this.m_serverOutput.AppendText(String.Format("{0}:{1}:{2} \t {3} \r", hours.ToString(), minutes.ToString(), seconds.ToString(), s));
+                    m_tdlServer.UpdateServerLog(s);
+
+                    //Make sure the text box stay focused at the bottom.
                     this.m_serverOutput.ScrollToCaret();
                 }
 
@@ -203,8 +201,10 @@ namespace TDL_Alpha_Server
                 userGuid = userGuid.Substring(1, userGuid.Length - 5);
 
                 var username = m_tdlPlayerList.Find(player => player.UserID == userGuid).PlayerName;
+                var textToLog = String.Format("{0}:{1}\r", username, textNoPrefix);
 
-                this.m_chatLog.AppendText(String.Format("{0}:{1}\r", username, textNoPrefix));
+                this.m_chatLog.AppendText(textToLog);
+                m_tdlServer.UpdateChatLog(textToLog);
             }
 
             this.m_serverOutput.ScrollToCaret();
@@ -272,9 +272,6 @@ namespace TDL_Alpha_Server
 
         private void m_serverStarter_FormClosing(object sender, FormClosingEventArgs e)
         {
-            File.WriteAllText(String.Format(@"{0}\{1}", m_saveFolder, "TDLServerLog.txt"), m_serverOutput.Text);
-            File.WriteAllText(String.Format(@"{0}\{1}", m_saveFolder, "TDLChatLog.txt"), m_chatLog.Text);
-
             m_tdlServer.Dispose();
         }
     }

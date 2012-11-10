@@ -21,23 +21,14 @@ namespace TDL_Alpha_Server
         private int seconds = 0;
         private int minutes = 0;
         private int hours = 0;
-
-        private List<TDLPlayer> m_tdlPlayerList;
+        private LogFileNotifier m_serverLogFileNotifier;
+        private LogFileNotifier m_chatLogFileNotifier;
         private TDLServer m_tdlServer;
-
-        private bool m_worldSeedFound = false;
-        
-        private System.Threading.Timer m_timer;
-        private int m_zombieKillCount = 0;
-        private int m_playersConnectedCount = 0;
-        private int m_playerDeathCount = 0;
 
         public m_serverStarter()
         {
             InitializeComponent();
-            this.m_playerConnected.Text = String.Format("{0}/{1}", m_playersConnectedCount, (int)m_playerNumber.Value);
-
-            m_tdlPlayerList = new List<TDLPlayer>();
+            this.m_playerConnected.Text = String.Format("{0}/{1}", 0, (int)m_playerNumber.Value);
 
             m_upTimeTimer = new System.Windows.Forms.Timer();
             m_upTimeTimer.Enabled = false;
@@ -75,6 +66,9 @@ namespace TDL_Alpha_Server
 
         private void m_startServer_Click(object sender, EventArgs e)
         {
+            m_startServer.Enabled = false;
+            m_stopServer.Enabled = true;
+
             m_upTimeTimer.Enabled = true;
             m_upTimeTimer.Start();
 
@@ -93,156 +87,18 @@ namespace TDL_Alpha_Server
                 };
 
                 m_tdlServer.Start();
+                m_chatLogFileNotifier = new LogFileNotifier(m_tdlServer.ChatLogFile, m_chatLog);
+                m_serverLogFileNotifier = new LogFileNotifier(m_tdlServer.ServerLogFile, m_serverOutput);
 
-                m_timer = new System.Threading.Timer(new TimerCallback(ParseLogContents), null, 0, 1000);
+                m_chatLog.DataBindings.Add("Text", m_chatLogFileNotifier, "FileContent");
+                m_serverOutput.DataBindings.Add("Text", m_serverLogFileNotifier, "FileContent"); 
+                this.m_worldSeed.Text = m_tdlServer.WorldSeed;
             }
             catch(Exception ex)
             {
                 MessageBox.Show("TDLServerLog.txt file currently in use.\nPlease close it and try again.");
             }
 
-        }
-
-        private long m_previousFileLength = 0;
-        private void ParseLogContents(object obj)
-        {
-            using (FileStream fs = File.Open("TDLServerLog.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            {
-                if (fs.Length > m_previousFileLength && fs.Length != 0)
-                { 
-                    int seekDist = (int)fs.Length - (int)m_previousFileLength;
-
-                    // Seek 1024 bytes from the end of the file
-                    fs.Seek(-seekDist, SeekOrigin.End);
-                    // read 1024 bytes
-                    byte[] bytes = new byte[seekDist];
-                    fs.Read(bytes, 0, seekDist);
-
-                    m_previousFileLength = fs.Length;
-
-                    // Convert bytes to string
-                    string s = Encoding.Default.GetString(bytes);
-
-                    if (!m_worldSeedFound)
-                    {
-                        FindWorldSeed(s);
-                    }
-
-                    //Finds if a user joined
-                    FindUserJoined(s);
-                    FindUserDisconnected(s);
-                    FindDeadZombies(s);
-                    FindUserDied(s);
-                    FindChat(s);
-
-                    this.m_serverOutput.AppendText(String.Format("{0}:{1}:{2} \t {3} \r", hours.ToString(), minutes.ToString(), seconds.ToString(), s));
-                    m_tdlServer.UpdateServerLog(s);
-
-                    //Make sure the text box stay focused at the bottom.
-                    this.m_serverOutput.ScrollToCaret();
-                }
-
-            }
-
-            if (m_previousFileLength > 10000)
-            {
-                File.WriteAllText("TDLServerLog.txt", String.Empty);
-                m_previousFileLength = 0;
-            }
-        }
-
-        private void FindUserJoined(string s)
-        {
-
-            /*Set net key table 414331190638781069 Player Avidan joined the game.*/
-            string searchPattern = @"(\b[0-9]+\b)\r\r\nPlayer (\b[a-zA-Z0-9_-]+\b) joined the game.";
-
-            var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
-            {
-                //Create a new user and add them to the user list
-                var splitString = match.ToString().Split(new [] {' ','\r', '\n'});
-
-                var user = new TDLPlayer()
-                {
-                    UserID = splitString[0],
-                    PlayerName = splitString[4]
-                };
-                m_tdlPlayerList.Add(user);
-                this.m_playerList.Items.Add(user.PlayerName);
-                this.m_playerConnected.Text = String.Format("{0}/{1}", ++m_playersConnectedCount, m_tdlServer.MaxPlayers);
-            }
-        }
-
-        private void FindWorldSeed(string s)
-        {
-            string searchPattern = @"Scenario seeds: (\b[0-9]+\b)";
-            var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
-            {
-                var splitString = match.ToString().Split(' ');
-                this.m_worldSeed.Text = splitString[2];
-                m_worldSeedFound = true;
-            }
-        }
-
-        private void FindChat(string s)
-        {
-            string searchPattern = @"^\(Tm: 0, Scp: 0\): (.*) \(([0-9]+)\)\r\r\n";
-
-            var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
-            {
-                var userGuid = Regex.Match(match.ToString(), @"\(([0-9]+)\)\r\r\n$").ToString();
-                var textNoGuid = match.ToString().Replace(userGuid, "");
-                var textNoPrefix = textNoGuid.Replace(@"(Tm: 0, Scp: 0):", "");
-
-                //Remove brackets from the guid for searching
-                userGuid = userGuid.Substring(1, userGuid.Length - 5);
-
-                var username = m_tdlPlayerList.Find(player => player.UserID == userGuid).PlayerName;
-                var textToLog = String.Format("{0}:{1}\r", username, textNoPrefix);
-
-                this.m_chatLog.AppendText(textToLog);
-                m_tdlServer.UpdateChatLog(textToLog);
-            }
-
-            this.m_serverOutput.ScrollToCaret();
-        }
-
-        private void FindUserDisconnected(string s)
-        {
-            string searchPattern = @"A client has disconnected.";
-
-            var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
-            {
-                this.m_playerConnected.Text = String.Format("{0}/{1}", --m_playersConnectedCount, m_tdlServer.MaxPlayers);
-            }
-        }
-
-        private void FindDeadZombies(string s)
-        {
-            string searchPattern = @"Zombie Died.";
-
-            var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
-            {
-                m_zombieKillCount++;
-                this.m_zombieKills.Text = m_zombieKillCount.ToString();
-            }
-        }
-
-        private void FindUserDied(string s)
-        {
-            string searchPattern = @"Player Died.";
-
-            var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
-            {
-                m_playerDeathCount++;
-                this.m_playerDeaths.Text = m_playerDeathCount.ToString();
-            }
         }
 
 
@@ -257,7 +113,7 @@ namespace TDL_Alpha_Server
 
         private void m_playerNumber_ValueChanged(object sender, EventArgs e)
         {
-            this.m_playerConnected.Text = String.Format("{0}/{1}", m_playersConnectedCount, (int)m_playerNumber.Value);
+            this.m_playerConnected.Text = String.Format("{0}/{1}", 0 , (int)m_playerNumber.Value);
         }
 
         private void m_publicServer_CheckedChanged(object sender, EventArgs e)
@@ -273,6 +129,55 @@ namespace TDL_Alpha_Server
         private void m_serverStarter_FormClosing(object sender, FormClosingEventArgs e)
         {
             m_tdlServer.Dispose();
+        }
+
+        private void m_stopServer_Click(object sender, EventArgs e)
+        {
+            m_startServer.Enabled = true;
+            m_stopServer.Enabled = false;
+
+            //Destroy old server and set to null, ready for a new server
+            if (m_tdlServer != null)
+            { 
+                m_tdlServer.Dispose();
+                m_tdlServer = null;
+            }
+
+            //Set things back to default, ready to run again...
+            m_options.Enabled = true;
+            m_chatLog.Clear();
+            m_serverOutput.Clear();
+            m_playerList.Items.Clear();
+            m_upTime.Text = "00:00:00";
+            m_upTimeTimer.Stop();
+            m_upTimeTimer.Enabled = false;
+            m_chatLog.DataBindings.Clear();
+            m_serverOutput.DataBindings.Clear();
+        }
+
+        private void m_serverOutput_TextChanged(object sender, EventArgs e)
+        {
+            this.m_serverOutput.SelectionStart = this.m_serverOutput.TextLength;
+            this.m_serverOutput.ScrollToCaret();
+            
+            //Can't htink of a better place to update this code yet
+            this.m_zombieKills.Text = m_tdlServer.ZombieKillCount.ToString();
+            this.m_playerDeaths.Text = m_tdlServer.PlayerDeathCount.ToString();
+            this.m_playerConnected.Text = m_tdlServer.ConnectedPlayersCount.ToString();
+
+            //If we have a mismatch count between how many players the server says it has an how many the GUI says it has we update
+            //the list accordingly
+            if (this.m_playerList.Items.Count != m_tdlServer.ConnectedPlayers.Count)
+            {
+                this.m_playerList.Items.Clear(); 
+                this.m_playerList.Items.AddRange(m_tdlServer.ConnectedPlayers.Select(player => player.PlayerName).ToArray());
+            }
+        }
+
+        private void m_chatLog_TextChanged(object sender, EventArgs e)
+        {
+            this.m_chatLog.SelectionStart = this.m_chatLog.TextLength;
+            this.m_chatLog.ScrollToCaret();
         }
     }
 }

@@ -28,7 +28,7 @@ namespace TDL_Alpha_Server
         public m_serverStarter()
         {
             InitializeComponent();
-            this.m_playerConnected.Text = String.Format("{0}/{1}", 0, (int)m_playerNumber.Value);
+            m_playerConnected.Text = String.Format("{0}/{1}", 0, (int)m_playerNumber.Value);
 
             m_upTimeTimer = new System.Windows.Forms.Timer();
             m_upTimeTimer.Enabled = false;
@@ -92,7 +92,6 @@ namespace TDL_Alpha_Server
 
                 m_chatLog.DataBindings.Add("Text", m_chatLogFileNotifier, "FileContent");
                 m_serverOutput.DataBindings.Add("Text", m_serverLogFileNotifier, "FileContent"); 
-                this.m_worldSeed.Text = m_tdlServer.WorldSeed;
             }
             catch(Exception ex)
             {
@@ -107,13 +106,13 @@ namespace TDL_Alpha_Server
         /// </summary>
         private void processCompletedOrCanceled(object sender, EventArgs e)
         {
-            this.Cursor = Cursors.Default;
-            //this.btnOk.Enabled = true;
+            Cursor = Cursors.Default;
+            //btnOk.Enabled = true;
         }
 
         private void m_playerNumber_ValueChanged(object sender, EventArgs e)
         {
-            this.m_playerConnected.Text = String.Format("{0}/{1}", 0 , (int)m_playerNumber.Value);
+            m_playerConnected.Text = String.Format("{0}/{1}", 0 , (int)m_playerNumber.Value);
         }
 
         private void m_publicServer_CheckedChanged(object sender, EventArgs e)
@@ -128,13 +127,19 @@ namespace TDL_Alpha_Server
 
         private void m_serverStarter_FormClosing(object sender, FormClosingEventArgs e)
         {
-            m_tdlServer.Dispose();
+            if(m_tdlServer != null)
+                m_tdlServer.Dispose();
         }
 
         private void m_stopServer_Click(object sender, EventArgs e)
         {
             m_startServer.Enabled = true;
             m_stopServer.Enabled = false;
+
+            m_chatLog.Clear();
+            m_serverOutput.Clear();
+            m_chatLog.DataBindings.Clear();
+            m_serverOutput.DataBindings.Clear();
 
             //Destroy old server and set to null, ready for a new server
             if (m_tdlServer != null)
@@ -145,39 +150,44 @@ namespace TDL_Alpha_Server
 
             //Set things back to default, ready to run again...
             m_options.Enabled = true;
-            m_chatLog.Clear();
-            m_serverOutput.Clear();
             m_playerList.Items.Clear();
             m_upTime.Text = "00:00:00";
             m_upTimeTimer.Stop();
             m_upTimeTimer.Enabled = false;
-            m_chatLog.DataBindings.Clear();
-            m_serverOutput.DataBindings.Clear();
+            m_zombieKills.Text = "0";
+            m_playerDeaths.Text = "0";
+            m_playerConnected.Text = "0";
+            m_worldSeed.Text = String.Empty;
         }
 
         private void m_serverOutput_TextChanged(object sender, EventArgs e)
         {
-            this.m_serverOutput.SelectionStart = this.m_serverOutput.TextLength;
-            this.m_serverOutput.ScrollToCaret();
+            m_serverOutput.SelectionStart = m_serverOutput.TextLength;
+            m_serverOutput.ScrollToCaret();
             
             //Can't htink of a better place to update this code yet
-            this.m_zombieKills.Text = m_tdlServer.ZombieKillCount.ToString();
-            this.m_playerDeaths.Text = m_tdlServer.PlayerDeathCount.ToString();
-            this.m_playerConnected.Text = m_tdlServer.ConnectedPlayersCount.ToString();
+            m_zombieKills.Text = m_tdlServer.ZombieKillCount.ToString();
+            m_playerDeaths.Text = m_tdlServer.PlayerDeathCount.ToString();
+            m_playerConnected.Text = m_tdlServer.ConnectedPlayersCount.ToString();
 
             //If we have a mismatch count between how many players the server says it has an how many the GUI says it has we update
             //the list accordingly
-            if (this.m_playerList.Items.Count != m_tdlServer.ConnectedPlayers.Count)
+            if (m_playerList.Items.Count != m_tdlServer.ConnectedPlayers.Count)
             {
-                this.m_playerList.Items.Clear(); 
-                this.m_playerList.Items.AddRange(m_tdlServer.ConnectedPlayers.Select(player => player.PlayerName).ToArray());
+                m_playerList.Items.Clear(); 
+                m_playerList.Items.AddRange(m_tdlServer.ConnectedPlayers.Select(player => player.PlayerName).ToArray());
+            }
+
+            if (m_worldSeed.Text == String.Empty)
+            {
+                m_worldSeed.Text = m_tdlServer.WorldSeed;
             }
         }
 
         private void m_chatLog_TextChanged(object sender, EventArgs e)
         {
-            this.m_chatLog.SelectionStart = this.m_chatLog.TextLength;
-            this.m_chatLog.ScrollToCaret();
+            m_chatLog.SelectionStart = m_chatLog.TextLength;
+            m_chatLog.ScrollToCaret();
         }
     }
 }

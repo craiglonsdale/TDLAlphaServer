@@ -218,6 +218,7 @@
             // 
             // m_stopServer
             // 
+            this.m_stopServer.Enabled = false;
             this.m_stopServer.Location = new System.Drawing.Point(159, 252);
             this.m_stopServer.Name = "m_stopServer";
             this.m_stopServer.Size = new System.Drawing.Size(75, 23);
@@ -311,11 +312,10 @@
             // m_worldSeed
             // 
             this.m_worldSeed.AutoSize = true;
-            this.m_worldSeed.Location = new System.Drawing.Point(117, 82);
+            this.m_worldSeed.Location = new System.Drawing.Point(121, 84);
             this.m_worldSeed.Name = "m_worldSeed";
-            this.m_worldSeed.Size = new System.Drawing.Size(25, 13);
+            this.m_worldSeed.Size = new System.Drawing.Size(0, 13);
             this.m_worldSeed.TabIndex = 20;
-            this.m_worldSeed.Text = "???";
             // 
             // label5
             // 
@@ -329,7 +329,7 @@
             // m_upTime
             // 
             this.m_upTime.AutoSize = true;
-            this.m_upTime.Location = new System.Drawing.Point(117, 97);
+            this.m_upTime.Location = new System.Drawing.Point(121, 97);
             this.m_upTime.Name = "m_upTime";
             this.m_upTime.Size = new System.Drawing.Size(49, 13);
             this.m_upTime.TabIndex = 22;

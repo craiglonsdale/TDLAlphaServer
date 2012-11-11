@@ -24,8 +24,6 @@ namespace TDL_Alpha_Server
         //Timer for looks at the server logs and updating
         private System.Threading.Timer m_timer;
 
-        private DateTime m_nowLocalDateTime;
-
         public TDLServer(ISynchronizeInvoke guiApp)
         {
             //Override old TDL Log file with empty text
@@ -104,8 +102,7 @@ namespace TDL_Alpha_Server
             m_serverArguments = String.Format(" --{0} --maxplayers={1} --gamemode={2} --servername={3}", ServerType, MaxPlayers, Visibility, ServerName);
             m_processCaller.Arguments = m_serverArguments;
             m_processCaller.Start();
-            m_nowLocalDateTime = DateTime.Now.ToLocalTime();
-            m_saveFolder = String.Format("{0}_{1}", "TDLServer", m_nowLocalDateTime.ToFileTime());
+            m_saveFolder = String.Format("{0}_{1}", "TDLServer", DateTime.Now.ToLocalTime().ToFileTime());
             m_timer = new System.Threading.Timer(new TimerCallback(ParseLogContents), null, 0, 1000);
 
             Directory.CreateDirectory(m_saveFolder);
@@ -182,8 +179,8 @@ namespace TDL_Alpha_Server
                     FindChat(s);
 
                     UpdateServerLog(String.Format("{0} - {1}: {2} \r",
-                                     m_nowLocalDateTime.ToShortDateString(),
-                                     m_nowLocalDateTime.ToShortTimeString(),
+                                     DateTime.Now.ToLocalTime().ToShortDateString(),
+                                     DateTime.Now.ToLocalTime().ToShortTimeString(),
                                      s));
                 }
 
@@ -250,8 +247,8 @@ namespace TDL_Alpha_Server
                 var chatTextToLog = String.Format("{0}:{1}\r", username, textNoPrefix);
 
                 UpdateChatLog(String.Format("({0} - {1}) {2} \r",
-                                 m_nowLocalDateTime.ToShortDateString(),
-                                 m_nowLocalDateTime.ToShortTimeString(),
+                                 DateTime.Now.ToLocalTime().ToShortDateString(),
+                                 DateTime.Now.ToLocalTime().ToShortTimeString(),
                                  chatTextToLog));
             }
         }

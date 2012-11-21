@@ -67,7 +67,13 @@ namespace TDL_Alpha_Server
         /// <summary>
         /// Number of players currently connected to the server.
         /// </summary>
-        public int ConnectedPlayersCount{get; private set;}
+        public int ConnectedPlayersCount
+        {
+            get
+            {
+                return ConnectedPlayers.Count;
+            }
+        }
         
         /// <summary>
         /// NUmber of times players have died on this server.
@@ -191,21 +197,20 @@ namespace TDL_Alpha_Server
         {
 
             /*Set net key table 414331190638781069 Player Avidan joined the game.*/
-            string searchPattern = @"(\b[0-9]+\b)\r\r\nPlayer (\b[a-zA-Z0-9_-]+\b) joined the game.";
+            string searchPattern = @"PlayerJoin: [0-9] '\b[a-zA-Z0-9_-]+\b'";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
             {
                 //Create a new user and add them to the user list
-                var splitString = match.ToString().Split(new[] { ' ', '\r', '\n' });
+                var splitString = match.ToString().Split(' ');
 
                 var user = new TDLPlayer()
                 {
-                    UserID = splitString[0],
-                    PlayerName = splitString[4]
+                    UserID = splitString[1],
+                    PlayerName = splitString[2].Replace("'", "")
                 };
                 ConnectedPlayers.Add(user);
-                ConnectedPlayersCount++;
             }
         }
 
@@ -231,25 +236,24 @@ namespace TDL_Alpha_Server
         /// <param name="s">String to parse.</param>
         private void FindChat(string s)
         {
-            string searchPattern = @"^\(Tm: 0, Scp: 0\): (.*) \(([0-9]+)\)\r\r\n";
+            string searchPattern = @"\b[a-zA-Z0-9_-]+\b: .*";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
-            foreach (var match in matches)
+
+            foreach (Match match in matches)
             {
-                var userGuid = Regex.Match(match.ToString(), @"\(([0-9]+)\)\r\r\n$").ToString();
-                var textNoGuid = match.ToString().Replace(userGuid, "");
-                var textNoPrefix = textNoGuid.Replace(@"(Tm: 0, Scp: 0):", "");
+                var splitString = match.ToString().Split(':');
 
-                //Remove brackets from the guid for searching
-                userGuid = userGuid.Substring(1, userGuid.Length - 5);
+                //Find if this is actually a player talking :|
+                if (ConnectedPlayers.Any(player => String.Compare(player.PlayerName, splitString[0], ignoreCase: true) == 0))
+                {
+                    UpdateChatLog(String.Format("({0} - {1}) {2} : {3}\r",
+                                     DateTime.Now.ToLocalTime().ToShortDateString(),
+                                     DateTime.Now.ToLocalTime().ToShortTimeString(),
+                                      splitString[0],
+                                      splitString[1]));
+                }
 
-                var username = ConnectedPlayers.Find(player => player.UserID == userGuid).PlayerName;
-                var chatTextToLog = String.Format("{0}:{1}\r", username, textNoPrefix);
-
-                UpdateChatLog(String.Format("({0} - {1}) {2} \r",
-                                 DateTime.Now.ToLocalTime().ToShortDateString(),
-                                 DateTime.Now.ToLocalTime().ToShortTimeString(),
-                                 chatTextToLog));
             }
         }
 
@@ -259,12 +263,14 @@ namespace TDL_Alpha_Server
         /// <param name="s">String to parse.</param>
         private void FindUserDisconnected(string s)
         {
-            string searchPattern = @"A client has disconnected.";
+            string searchPattern = @"PlayerDelete: [0-9]+";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
             {
-                ConnectedPlayersCount--;
+                var splitString = match.ToString().Split(' ');
+
+                ConnectedPlayers.Remove(ConnectedPlayers.Single(player => player.UserID == splitString[1]));
             }
         }
 
@@ -274,12 +280,13 @@ namespace TDL_Alpha_Server
         /// <param name="s">String to parse.</param>
         private void FindDeadZombies(string s)
         {
-            string searchPattern = @"Zombie Died.";
+            string searchPattern = @"Zombie died, inc count [0-9]+";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
             {
-                ZombieKillCount++;
+                var splitString = match.ToString().Split(' ');
+                ZombieKillCount = Int32.Parse(splitString[4]);
             }
         }
 
@@ -289,11 +296,13 @@ namespace TDL_Alpha_Server
         /// <param name="s">String to parse.</param>
         private void FindUserDied(string s)
         {
-            string searchPattern = @"Player Died.";
+            string searchPattern = @"PlayerDied: [0-9]+";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
             {
+                var splitString = match.ToString().Split(' ');
+                ConnectedPlayers.Single(player => player.UserID == splitString[1]).Deaths++;
                 PlayerDeathCount++;
             }
         }

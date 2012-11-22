@@ -197,7 +197,7 @@ namespace TDL_Alpha_Server
         {
 
             /*Set net key table 414331190638781069 Player Avidan joined the game.*/
-            string searchPattern = @"PlayerJoin: [0-9] '\b[a-zA-Z0-9_-]+\b'";
+            string searchPattern = @"PlayerJoin: [0-9]+ '\b[a-zA-Z0-9_-]+\b'";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
@@ -270,7 +270,10 @@ namespace TDL_Alpha_Server
             {
                 var splitString = match.ToString().Split(' ');
 
-                ConnectedPlayers.Remove(ConnectedPlayers.Single(player => player.UserID == splitString[1]));
+                if (ConnectedPlayersCount > 0)
+                {
+                    ConnectedPlayers.Remove(ConnectedPlayers.Single(player => player.UserID == splitString[1]));
+                }
             }
         }
 

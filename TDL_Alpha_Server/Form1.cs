@@ -202,10 +202,11 @@ namespace TDL_Alpha_Server
                 if (m_playerList.SelectedItem.ToString().Length != 0)
                 {
                     var selectedPlayer = m_tdlServer.ConnectedPlayers.Single(player => player.PlayerName == m_playerList.SelectedItem.ToString());
-                    MessageBox.Show(String.Format("Player: {0}\nUserID: {1}\nDeaths: {2}",
+                    MessageBox.Show(String.Format("Player: {0}\nUserID: {1}\nDeaths: {2}\n Kills: {3}",
                                                     selectedPlayer.PlayerName,
                                                     selectedPlayer.UserID,
-                                                    selectedPlayer.Deaths));
+                                                    selectedPlayer.Deaths,
+                                                    selectedPlayer.ZombieKills));
                 }
             }
         }

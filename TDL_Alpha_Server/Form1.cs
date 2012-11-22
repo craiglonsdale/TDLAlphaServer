@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Threading;
 using System.Text.RegularExpressions;
+using System.Drawing.Text;
 
 namespace TDL_Alpha_Server
 {
@@ -24,10 +25,14 @@ namespace TDL_Alpha_Server
         private LogFileNotifier m_serverLogFileNotifier;
         private LogFileNotifier m_chatLogFileNotifier;
         private TDLServer m_tdlServer;
+        
 
         public m_serverStarter()
         {
+            LoadCustomFont();
             InitializeComponent();
+            ApplyCustomFonts(this.Controls);
+              
             m_playerConnected.Text = String.Format("{0}/{1}", 0, (int)m_playerNumber.Value);
 
             m_upTimeTimer = new System.Windows.Forms.Timer();
@@ -188,6 +193,21 @@ namespace TDL_Alpha_Server
         {
             m_chatLog.SelectionStart = m_chatLog.TextLength;
             m_chatLog.ScrollToCaret();
+        }
+
+        private void m_playerList_DoubleClick(object sender, EventArgs e)
+        {
+            if (m_playerList.SelectedItem != null)
+            {
+                if (m_playerList.SelectedItem.ToString().Length != 0)
+                {
+                    var selectedPlayer = m_tdlServer.ConnectedPlayers.Single(player => player.PlayerName == m_playerList.SelectedItem.ToString());
+                    MessageBox.Show(String.Format("Player: {0}\nUserID: {1}\nDeaths: {2}",
+                                                    selectedPlayer.PlayerName,
+                                                    selectedPlayer.UserID,
+                                                    selectedPlayer.Deaths));
+                }
+            }
         }
     }
 }

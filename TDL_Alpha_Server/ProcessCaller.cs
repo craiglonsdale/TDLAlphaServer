@@ -100,16 +100,6 @@ namespace TDL_Alpha_Server
         {
         }
 
-        // This constructor only works with changes to AsyncOperation...
-        //        /// <summary>
-        //        /// Initialises a ProcessCaller without an association to an
-        //        /// ISynchronizeInvoke.  All events raised from this object
-        //        /// will be delievered via the worker thread.
-        //        /// </summary>
-        //        public ProcessCaller()
-        //        {
-        //        }
-
         /// <summary>
         /// Launch a process, but do not return until the process has exited.
         /// That way we can kill the process if a cancel is requested.
@@ -130,6 +120,26 @@ namespace TDL_Alpha_Server
                     AcknowledgeCancel();
                 }
             }
+        }
+
+        /// <summary>
+        /// Is the internal process responding.
+        /// </summary>
+        public bool IsProcessResponsive
+        {
+            get
+            {
+                return process.Responding;
+            }
+        }
+
+        /// <summary>
+        /// Restarts the process with the last used arguments.
+        /// </summary>
+        public void RestartProcess()
+        {
+            process.Kill();
+            StartProcess();
         }
 
         /// <summary>

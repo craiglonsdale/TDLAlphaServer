@@ -85,6 +85,16 @@ namespace TDL_Alpha_Server
             this.m_chatLabel = new System.Windows.Forms.Label();
             this.m_gameStats = new System.Windows.Forms.GroupBox();
             this.m_options = new System.Windows.Forms.Panel();
+            this.m_adminPassword = new System.Windows.Forms.TextBox();
+            this.m_adminPasswordLabel = new System.Windows.Forms.Label();
+            this.m_serverPassword = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.m_debugLog = new System.Windows.Forms.CheckBox();
+            this.m_noGUI = new System.Windows.Forms.CheckBox();
+            this.m_hideAll = new System.Windows.Forms.CheckBox();
+            this.m_ignoreCommands = new System.Windows.Forms.CheckBox();
+            this.m_saveFolder = new System.Windows.Forms.Button();
+            this.m_saveDirectory = new System.Windows.Forms.Label();
             this.m_serverVisibility.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_playerNumber)).BeginInit();
             this.m_serverType.SuspendLayout();
@@ -96,7 +106,7 @@ namespace TDL_Alpha_Server
             // 
             this.m_serverNameLabel.AutoSize = true;
             this.m_serverNameLabel.ForeColor = System.Drawing.Color.DarkRed;
-            this.m_serverNameLabel.Location = new System.Drawing.Point(13, 9);
+            this.m_serverNameLabel.Location = new System.Drawing.Point(5, 12);
             this.m_serverNameLabel.Name = "m_serverNameLabel";
             this.m_serverNameLabel.Size = new System.Drawing.Size(72, 13);
             this.m_serverNameLabel.TabIndex = 0;
@@ -106,7 +116,7 @@ namespace TDL_Alpha_Server
             // 
             this.m_maxPlayers.AutoSize = true;
             this.m_maxPlayers.ForeColor = System.Drawing.Color.DarkRed;
-            this.m_maxPlayers.Location = new System.Drawing.Point(14, 39);
+            this.m_maxPlayers.Location = new System.Drawing.Point(5, 87);
             this.m_maxPlayers.Name = "m_maxPlayers";
             this.m_maxPlayers.Size = new System.Drawing.Size(67, 13);
             this.m_maxPlayers.TabIndex = 1;
@@ -128,7 +138,7 @@ namespace TDL_Alpha_Server
             // 
             this.m_protectedOption.AutoSize = true;
             this.m_protectedOption.ForeColor = System.Drawing.Color.DarkRed;
-            this.m_protectedOption.Location = new System.Drawing.Point(6, 43);
+            this.m_protectedOption.Location = new System.Drawing.Point(4, 43);
             this.m_protectedOption.Name = "m_protectedOption";
             this.m_protectedOption.Size = new System.Drawing.Size(71, 17);
             this.m_protectedOption.TabIndex = 3;
@@ -154,7 +164,7 @@ namespace TDL_Alpha_Server
             this.m_serverVisibility.Controls.Add(this.m_protectedOption);
             this.m_serverVisibility.Controls.Add(this.m_publicServer);
             this.m_serverVisibility.Controls.Add(this.m_soloOption);
-            this.m_serverVisibility.Location = new System.Drawing.Point(12, 63);
+            this.m_serverVisibility.Location = new System.Drawing.Point(8, 142);
             this.m_serverVisibility.Name = "m_serverVisibility";
             this.m_serverVisibility.Size = new System.Drawing.Size(195, 89);
             this.m_serverVisibility.TabIndex = 5;
@@ -163,7 +173,7 @@ namespace TDL_Alpha_Server
             // 
             // m_serverName
             // 
-            this.m_serverName.Location = new System.Drawing.Point(211, 6);
+            this.m_serverName.Location = new System.Drawing.Point(145, 9);
             this.m_serverName.Name = "m_serverName";
             this.m_serverName.Size = new System.Drawing.Size(90, 20);
             this.m_serverName.TabIndex = 6;
@@ -171,7 +181,7 @@ namespace TDL_Alpha_Server
             // 
             // m_playerNumber
             // 
-            this.m_playerNumber.Location = new System.Drawing.Point(211, 37);
+            this.m_playerNumber.Location = new System.Drawing.Point(145, 84);
             this.m_playerNumber.Maximum = new decimal(new int[] {
             16,
             0,
@@ -194,11 +204,11 @@ namespace TDL_Alpha_Server
             // 
             // m_startServer
             // 
-            this.m_startServer.Location = new System.Drawing.Point(25, 252);
+            this.m_startServer.Location = new System.Drawing.Point(12, 252);
             this.m_startServer.Name = "m_startServer";
-            this.m_startServer.Size = new System.Drawing.Size(75, 23);
+            this.m_startServer.Size = new System.Drawing.Size(61, 23);
             this.m_startServer.TabIndex = 8;
-            this.m_startServer.Text = "Start Server";
+            this.m_startServer.Text = "Start";
             this.m_startServer.UseVisualStyleBackColor = true;
             this.m_startServer.Click += new System.EventHandler(this.m_startServer_Click);
             // 
@@ -206,9 +216,9 @@ namespace TDL_Alpha_Server
             // 
             this.m_serverType.Controls.Add(this.m_listenType);
             this.m_serverType.Controls.Add(this.m_dedicatedType);
-            this.m_serverType.Location = new System.Drawing.Point(12, 158);
+            this.m_serverType.Location = new System.Drawing.Point(213, 142);
             this.m_serverType.Name = "m_serverType";
-            this.m_serverType.Size = new System.Drawing.Size(195, 64);
+            this.m_serverType.Size = new System.Drawing.Size(116, 89);
             this.m_serverType.TabIndex = 9;
             this.m_serverType.TabStop = false;
             this.m_serverType.Text = "Server Type";
@@ -240,11 +250,11 @@ namespace TDL_Alpha_Server
             // m_stopServer
             // 
             this.m_stopServer.Enabled = false;
-            this.m_stopServer.Location = new System.Drawing.Point(145, 252);
+            this.m_stopServer.Location = new System.Drawing.Point(79, 252);
             this.m_stopServer.Name = "m_stopServer";
-            this.m_stopServer.Size = new System.Drawing.Size(75, 23);
+            this.m_stopServer.Size = new System.Drawing.Size(60, 23);
             this.m_stopServer.TabIndex = 10;
-            this.m_stopServer.Text = "Stop Server";
+            this.m_stopServer.Text = "Stop";
             this.m_stopServer.UseVisualStyleBackColor = true;
             this.m_stopServer.Click += new System.EventHandler(this.m_stopServer_Click);
             // 
@@ -367,11 +377,11 @@ namespace TDL_Alpha_Server
             // 
             // m_chatLog
             // 
-            this.m_chatLog.Location = new System.Drawing.Point(365, 356);
+            this.m_chatLog.Location = new System.Drawing.Point(365, 306);
             this.m_chatLog.Name = "m_chatLog";
             this.m_chatLog.ReadOnly = true;
             this.m_chatLog.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-            this.m_chatLog.Size = new System.Drawing.Size(858, 157);
+            this.m_chatLog.Size = new System.Drawing.Size(858, 266);
             this.m_chatLog.TabIndex = 23;
             this.m_chatLog.Text = "";
             this.m_chatLog.TextChanged += new System.EventHandler(this.m_chatLog_TextChanged);
@@ -381,11 +391,11 @@ namespace TDL_Alpha_Server
             this.m_chatLabel.AutoSize = true;
             this.m_chatLabel.BackColor = System.Drawing.Color.Transparent;
             this.m_chatLabel.ForeColor = System.Drawing.Color.Black;
-            this.m_chatLabel.Location = new System.Drawing.Point(396, 340);
+            this.m_chatLabel.Location = new System.Drawing.Point(1183, 290);
             this.m_chatLabel.Name = "m_chatLabel";
-            this.m_chatLabel.Size = new System.Drawing.Size(32, 13);
+            this.m_chatLabel.Size = new System.Drawing.Size(29, 13);
             this.m_chatLabel.TabIndex = 24;
-            this.m_chatLabel.Text = "Chat:";
+            this.m_chatLabel.Text = "Chat";
             // 
             // m_gameStats
             // 
@@ -401,9 +411,9 @@ namespace TDL_Alpha_Server
             this.m_gameStats.Controls.Add(this.m_playerDeaths);
             this.m_gameStats.Controls.Add(this.label4);
             this.m_gameStats.ForeColor = System.Drawing.Color.DarkRed;
-            this.m_gameStats.Location = new System.Drawing.Point(12, 356);
+            this.m_gameStats.Location = new System.Drawing.Point(12, 306);
             this.m_gameStats.Name = "m_gameStats";
-            this.m_gameStats.Size = new System.Drawing.Size(332, 156);
+            this.m_gameStats.Size = new System.Drawing.Size(332, 266);
             this.m_gameStats.TabIndex = 25;
             this.m_gameStats.TabStop = false;
             // 
@@ -411,6 +421,10 @@ namespace TDL_Alpha_Server
             // 
             this.m_options.BackColor = System.Drawing.Color.Transparent;
             this.m_options.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.m_options.Controls.Add(this.m_adminPassword);
+            this.m_options.Controls.Add(this.m_adminPasswordLabel);
+            this.m_options.Controls.Add(this.m_serverPassword);
+            this.m_options.Controls.Add(this.label6);
             this.m_options.Controls.Add(this.m_serverNameLabel);
             this.m_options.Controls.Add(this.m_serverName);
             this.m_options.Controls.Add(this.m_playerNumber);
@@ -422,6 +436,111 @@ namespace TDL_Alpha_Server
             this.m_options.Size = new System.Drawing.Size(332, 234);
             this.m_options.TabIndex = 26;
             // 
+            // m_adminPassword
+            // 
+            this.m_adminPassword.Location = new System.Drawing.Point(145, 58);
+            this.m_adminPassword.Name = "m_adminPassword";
+            this.m_adminPassword.Size = new System.Drawing.Size(90, 20);
+            this.m_adminPassword.TabIndex = 13;
+            // 
+            // m_adminPasswordLabel
+            // 
+            this.m_adminPasswordLabel.AutoSize = true;
+            this.m_adminPasswordLabel.ForeColor = System.Drawing.Color.Maroon;
+            this.m_adminPasswordLabel.Location = new System.Drawing.Point(5, 61);
+            this.m_adminPasswordLabel.Name = "m_adminPasswordLabel";
+            this.m_adminPasswordLabel.Size = new System.Drawing.Size(88, 13);
+            this.m_adminPasswordLabel.TabIndex = 12;
+            this.m_adminPasswordLabel.Text = "Admin Password:";
+            // 
+            // m_serverPassword
+            // 
+            this.m_serverPassword.Location = new System.Drawing.Point(145, 34);
+            this.m_serverPassword.Name = "m_serverPassword";
+            this.m_serverPassword.Size = new System.Drawing.Size(90, 20);
+            this.m_serverPassword.TabIndex = 11;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.ForeColor = System.Drawing.Color.Maroon;
+            this.label6.Location = new System.Drawing.Point(5, 37);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(56, 13);
+            this.label6.TabIndex = 10;
+            this.label6.Text = "Password:";
+            // 
+            // m_debugLog
+            // 
+            this.m_debugLog.AutoSize = true;
+            this.m_debugLog.BackColor = System.Drawing.Color.Transparent;
+            this.m_debugLog.ForeColor = System.Drawing.Color.Maroon;
+            this.m_debugLog.Location = new System.Drawing.Point(1083, 578);
+            this.m_debugLog.Name = "m_debugLog";
+            this.m_debugLog.Size = new System.Drawing.Size(58, 17);
+            this.m_debugLog.TabIndex = 27;
+            this.m_debugLog.Text = "Debug";
+            this.m_debugLog.UseVisualStyleBackColor = false;
+            // 
+            // m_noGUI
+            // 
+            this.m_noGUI.AutoSize = true;
+            this.m_noGUI.BackColor = System.Drawing.Color.Transparent;
+            this.m_noGUI.Enabled = false;
+            this.m_noGUI.ForeColor = System.Drawing.Color.Maroon;
+            this.m_noGUI.Location = new System.Drawing.Point(1083, 594);
+            this.m_noGUI.Name = "m_noGUI";
+            this.m_noGUI.Size = new System.Drawing.Size(59, 17);
+            this.m_noGUI.TabIndex = 28;
+            this.m_noGUI.Text = "No Gui";
+            this.m_noGUI.UseVisualStyleBackColor = false;
+            // 
+            // m_hideAll
+            // 
+            this.m_hideAll.AutoSize = true;
+            this.m_hideAll.BackColor = System.Drawing.Color.Transparent;
+            this.m_hideAll.Enabled = false;
+            this.m_hideAll.ForeColor = System.Drawing.Color.Maroon;
+            this.m_hideAll.Location = new System.Drawing.Point(1083, 610);
+            this.m_hideAll.Name = "m_hideAll";
+            this.m_hideAll.Size = new System.Drawing.Size(62, 17);
+            this.m_hideAll.TabIndex = 29;
+            this.m_hideAll.Text = "Hide All";
+            this.m_hideAll.UseVisualStyleBackColor = false;
+            // 
+            // m_ignoreCommands
+            // 
+            this.m_ignoreCommands.AutoSize = true;
+            this.m_ignoreCommands.BackColor = System.Drawing.Color.Transparent;
+            this.m_ignoreCommands.Enabled = false;
+            this.m_ignoreCommands.ForeColor = System.Drawing.Color.Maroon;
+            this.m_ignoreCommands.Location = new System.Drawing.Point(1083, 626);
+            this.m_ignoreCommands.Name = "m_ignoreCommands";
+            this.m_ignoreCommands.Size = new System.Drawing.Size(80, 17);
+            this.m_ignoreCommands.TabIndex = 30;
+            this.m_ignoreCommands.Text = "Ignore Cmd";
+            this.m_ignoreCommands.UseVisualStyleBackColor = false;
+            // 
+            // m_saveFolder
+            // 
+            this.m_saveFolder.Location = new System.Drawing.Point(365, 615);
+            this.m_saveFolder.Name = "m_saveFolder";
+            this.m_saveFolder.Size = new System.Drawing.Size(114, 28);
+            this.m_saveFolder.TabIndex = 31;
+            this.m_saveFolder.Text = "Save Folder";
+            this.m_saveFolder.UseVisualStyleBackColor = true;
+            this.m_saveFolder.Click += new System.EventHandler(this.m_saveFolder_Click);
+            // 
+            // m_saveDirectory
+            // 
+            this.m_saveDirectory.AutoSize = true;
+            this.m_saveDirectory.BackColor = System.Drawing.Color.Transparent;
+            this.m_saveDirectory.Location = new System.Drawing.Point(495, 621);
+            this.m_saveDirectory.Name = "m_saveDirectory";
+            this.m_saveDirectory.Size = new System.Drawing.Size(86, 13);
+            this.m_saveDirectory.TabIndex = 32;
+            this.m_saveDirectory.Text = "Default Directory";
+            // 
             // m_serverStarter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -429,14 +548,20 @@ namespace TDL_Alpha_Server
             this.BackgroundImage = global::TDL_Alpha_Server.Properties.Resources.TestBackground;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1235, 649);
+            this.Controls.Add(this.m_saveDirectory);
+            this.Controls.Add(this.m_saveFolder);
+            this.Controls.Add(this.m_ignoreCommands);
+            this.Controls.Add(this.m_hideAll);
+            this.Controls.Add(this.m_noGUI);
+            this.Controls.Add(this.m_debugLog);
             this.Controls.Add(this.m_options);
             this.Controls.Add(this.m_stopServer);
             this.Controls.Add(this.m_gameStats);
             this.Controls.Add(this.m_chatLabel);
             this.Controls.Add(this.m_chatLog);
             this.Controls.Add(this.m_playerList);
-            this.Controls.Add(this.m_startServer);
             this.Controls.Add(this.m_serverOutput);
+            this.Controls.Add(this.m_startServer);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "m_serverStarter";
@@ -487,6 +612,16 @@ namespace TDL_Alpha_Server
         private System.Windows.Forms.GroupBox m_gameStats;
         private System.Windows.Forms.Button m_stopServer;
         private Panel m_options;
+        private TextBox m_serverPassword;
+        private Label label6;
+        private Label m_adminPasswordLabel;
+        private TextBox m_adminPassword;
+        private CheckBox m_debugLog;
+        private CheckBox m_noGUI;
+        private CheckBox m_hideAll;
+        private CheckBox m_ignoreCommands;
+        private Button m_saveFolder;
+        private Label m_saveDirectory;
 
     }
 }

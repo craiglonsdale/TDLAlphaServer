@@ -1,15 +1,47 @@
-﻿using System;
+﻿//Copyright (C) 2013 Craig Lonsdale
+//Permission is hereby granted, free of charge, to any person obtaining a copy of 
+//this software and associated documentation files (the "Software"), to deal in the 
+//Software without restriction, including without limitation the rights to use, copy,
+//modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+//and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//The above copyright notice and this permission notice shall be included in all copies or substantial 
+//portions of the Software.
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT 
+//LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+//WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+//SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using System.Reflection;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace TDL_Alpha_Server
 {
+    
+    internal class StateObject
+    {
+        //Client Socket.
+        public Socket WorkSocket = null;
+
+        //Size of buffer to recieve;
+        public const int BUFFER_SIZE = 256;
+
+        //Recieve Buffer
+        public byte[] Buffer = new byte[BUFFER_SIZE];
+
+        //Recieved data string
+        public StringBuilder sb = new StringBuilder();
+    }
+
     /// <summary>
     /// OBject representing the TDL Server
     /// </summary>
@@ -35,7 +67,16 @@ namespace TDL_Alpha_Server
             m_processCaller = new ProcessCaller(guiApp);
             m_processCaller.FileName = TDLServerApp;
             ConnectedPlayers = new List<TDLPlayer>();
+            CustomWorldSaveDir = String.Empty;
+            AdminPassword = String.Empty;
+            ServerPassword = String.Empty;
+            ServerArguments = String.Empty;
         }
+
+        /// <summary>
+        /// Arguments ther server is running with.
+        /// </summary>
+        public String ServerArguments {get; private set;}
 
         /// <summary>
         /// Name of the server
@@ -101,12 +142,43 @@ namespace TDL_Alpha_Server
         public String ServerLogFile {get; private set;}
 
         /// <summary>
+        /// The Path to a customer world save directory.
+        /// If Empty the default will be used.
+        /// </summary>
+        public String CustomWorldSaveDir {get; set;}
+
+        /// <summary>
+        /// The Administrator password for the server.
+        /// If Empty the default will be used.
+        /// </summary>
+        public String AdminPassword {get; set;}
+
+        /// <summary>
+        /// The password for entering the server.
+        /// If Empty there will be no server password.
+        /// </summary>
+        public String ServerPassword {get; set;}
+
+        /// <summary>
+        /// Enables/Disables Debugging mode for the server.
+        /// </summary>
+        public bool DebugMode { get; set;}
+
+        /// <summary>
+        /// Is the internal TDL server responding
+        /// </summary>
+        public bool ServerResponding
+        {
+            get{return m_processCaller.IsProcessResponsive;}
+        }
+
+        /// <summary>
         /// Starts the server.
         /// </summary>
         public void Start()
         {
-            m_serverArguments = String.Format(" --{0} --maxplayers={1} --gamemode={2} --servername={3}", ServerType, MaxPlayers, Visibility, ServerName);
-            m_processCaller.Arguments = m_serverArguments;
+            ServerArguments = @BuildCmdLineArgs();
+            m_processCaller.Arguments = ServerArguments;
             m_processCaller.Start();
             m_saveFolder = String.Format("{0}_{1}", "TDLServer", DateTime.Now.ToLocalTime().ToFileTime());
             m_timer = new System.Threading.Timer(new TimerCallback(ParseLogContents), null, 0, 1000);
@@ -120,6 +192,44 @@ namespace TDL_Alpha_Server
             File.Create(ChatLogFile).Close();
         }
 
+        /// <summary>
+        /// BUilds the server cammand line arguments based on infomation in the GUI.
+        /// </summary>
+        /// <returns>Command LIne Arguments</returns>
+        private String BuildCmdLineArgs()
+        {
+            var commandLineArgs = new StringBuilder();
+            
+            //These default ones will always be included
+            commandLineArgs.Append(String.Format(" --{0} --maxplayers={1} --gamemode={2} --servername=\"{3}\"", ServerType, MaxPlayers, Visibility, ServerName));
+        
+            //These following ones are optional
+            //Custom location to save the world files
+            if (CustomWorldSaveDir != String.Empty)
+            {
+                commandLineArgs.Append(String.Format(" --filepath=\"{0}\"", CustomWorldSaveDir));
+            }
+
+            //Server Entry Password
+            if (ServerPassword != string.Empty)
+            {
+                commandLineArgs.Append(String.Format(" --password={0}", ServerPassword));
+            }
+
+            //Administrator Password
+            if (AdminPassword != String.Empty)
+            {
+                //commandLineArgs.Append(String.Format(" --adminpass={0}", AdminPassword));
+                ReplaceStringInFileContaining(@"\content\ServerConfig.tsc", "administratorPassword", "administratorPassword" + AdminPassword);
+            }
+
+            if (DebugMode)
+            {
+                commandLineArgs.Append(String.Format(" --debug", ServerPassword));
+            }
+            return commandLineArgs.ToString();
+        }
+        
         /// <summary>
         /// Writes the given chat log entry to the Chat Log created for this instance of the server.
         /// </summary>
@@ -153,6 +263,10 @@ namespace TDL_Alpha_Server
                 m_processCaller.CancelAndWait();
         }
 
+        /// <summary>
+        /// Parses the latest contents in the log file.
+        /// </summary>
+        /// <param name="obj"></param>
         public void ParseLogContents(object obj)
         {
             using (FileStream fs = File.Open("TDLServerLog.txt", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -263,7 +377,7 @@ namespace TDL_Alpha_Server
         /// <param name="s">String to parse.</param>
         private void FindUserDisconnected(string s)
         {
-            string searchPattern = @"PlayerDelete: [0-9]+";
+            string searchPattern = @"PlayerLeft: \b[a-zA-Z0-9_-]+\b";//[0-9]+";
 
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
@@ -272,7 +386,7 @@ namespace TDL_Alpha_Server
 
                 if (ConnectedPlayersCount > 0)
                 {
-                    ConnectedPlayers.Remove(ConnectedPlayers.Single(player => player.UserID == splitString[1]));
+                    ConnectedPlayers.Remove(ConnectedPlayers.Single(player => player.PlayerName == splitString[1]));
                 }
             }
         }
@@ -283,13 +397,14 @@ namespace TDL_Alpha_Server
         /// <param name="s">String to parse.</param>
         private void FindDeadZombies(string s)
         {
-            string searchPattern = @"Zombie died, inc count [0-9]+";
+            string searchPattern = @"ZombieDied";//, inc count [0-9]+";
 
+            //Not supported ATM
             var matches = Regex.Matches(s, searchPattern, RegexOptions.IgnoreCase);
             foreach (var match in matches)
             {
-                var splitString = match.ToString().Split(' ');
-                ZombieKillCount = Int32.Parse(splitString[4]);
+                //var splitString = match.ToString().Split(' ');
+                ZombieKillCount++; // = Int32.Parse(splitString[4]);
             }
         }
 
@@ -308,6 +423,33 @@ namespace TDL_Alpha_Server
                 ConnectedPlayers.Single(player => player.UserID == splitString[1]).Deaths++;
                 PlayerDeathCount++;
             }
+        }
+
+        /// <summary>
+        /// Replaces a given string in a file with another.
+        /// </summary>
+        /// <param name="filePath">Path to the folder to update</param>
+        /// <param name="contains">The string to replace.</param>
+        /// <param name="replaceWith">The string to replace the 'contains' param with.</param>
+        private void ReplaceStringInFileContaining(String filePath, String contains, String replaceWith)
+        {
+            var stringBuilder = new StringBuilder();
+
+            var fileContents = File.ReadAllLines(filePath);
+
+            foreach(var line in fileContents)
+            {
+                if (line.Contains(contains))
+                {
+                    stringBuilder.Append(replaceWith + "\r\n");
+                }
+                else
+                {
+                    stringBuilder.Append(line + "\r\n");
+                }
+            }
+
+            File.WriteAllText(filePath, stringBuilder.ToString());
         }
     }
 }

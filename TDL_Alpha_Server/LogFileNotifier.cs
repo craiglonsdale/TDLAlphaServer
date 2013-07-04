@@ -19,16 +19,16 @@ namespace TDL_Alpha_Server
 {
     public class LogFileNotifier : INotifyPropertyChanged
     {
-        private Control bindingControl;
         public Control BindingControl
         {
-            get { return bindingControl; }
+            get;
+            private set;
         }
 
-        private string path;
         public string Path
         {
-            get { return path; }
+            get;
+            private set;
         }
 
         private string fileContent;
@@ -46,8 +46,9 @@ namespace TDL_Alpha_Server
 
         public LogFileNotifier(string path, Control bindingControl)
         {
-            this.path = path;
-            this.bindingControl = bindingControl;
+            Path = path;
+            BindingControl = bindingControl;
+
             fileContent = File.ReadAllText(path);
             this.PropertyChanged = new PropertyChangedEventHandler(OnContentChanged);
             this.setValue = new SetValueDlg(SetContentValue);
@@ -61,14 +62,13 @@ namespace TDL_Alpha_Server
 
         void watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            bindingControl.Invoke(setValue, e.FullPath);
+            BindingControl.Invoke(setValue, e.FullPath);
         }
 
         #region INotifyPropertyChanged Members
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnContentChanged(object sender, PropertyChangedEventArgs e)
-        {
-        }
+        {}
         #endregion
 
         public delegate void SetValueDlg(string fileName);

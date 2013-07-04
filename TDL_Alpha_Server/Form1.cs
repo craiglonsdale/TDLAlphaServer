@@ -25,7 +25,7 @@ namespace TDL_Alpha_Server
         private LogFileNotifier m_serverLogFileNotifier;
         private LogFileNotifier m_chatLogFileNotifier;
         private TDLServer m_tdlServer;
-        
+        private bool m_customerFolderChosen;
 
         public m_serverStarter()
         {
@@ -39,6 +39,22 @@ namespace TDL_Alpha_Server
             m_upTimeTimer.Enabled = false;
             m_upTimeTimer.Interval = 1000;
             m_upTimeTimer.Tick += new EventHandler(m_upTimeTimer_Tick);
+            m_upTimeTimer.Tick += new EventHandler(CheckServerResponsivness);
+            m_customerFolderChosen = false;
+        }
+
+        /// <summary>
+        /// Updates the timer for the world Up-Time
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void CheckServerResponsivness(object sender, EventArgs e)
+        {
+            if (!m_tdlServer.ServerResponding)
+            {
+                KillServer();
+                StartServer();
+            }
         }
 
         /// <summary>
@@ -69,7 +85,28 @@ namespace TDL_Alpha_Server
             m_upTime.Text = String.Format("{0}:{1}:{2}", hours.ToString(), minutes.ToString(), seconds.ToString());
         }
 
+        /// <summary>
+        /// Called when the server is started.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_startServer_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                StartServer();
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show("TDLServerLog.txt file currently in use.\nPlease close it and try again.");
+            }
+
+        }
+
+        /// <summary>
+        /// Starts the server using the UI components values to generate command line arguments.
+        /// </summary>
+        private void StartServer()
         {
             m_startServer.Enabled = false;
             m_stopServer.Enabled = true;
@@ -77,32 +114,48 @@ namespace TDL_Alpha_Server
             m_upTimeTimer.Enabled = true;
             m_upTimeTimer.Start();
 
-            try
+            //Disbles the section hold the server options
+            m_options.Enabled = false;
+
+            m_tdlServer = new TDLServer(this)
             {
-                //Disbles the section hold the server options
-                m_options.Enabled = false;
+                ServerName = m_serverName.Text,
+                ServerType = m_serverType.Controls.OfType<RadioButton>().Where(r => r.Checked == true).FirstOrDefault().Text.ToLower(),
+                MaxPlayers = (int)m_playerNumber.Value,
+                Visibility = m_serverVisibility.Controls.OfType<RadioButton>().Where(r => r.Checked == true).FirstOrDefault().Text.ToLower()
+            };
 
-                m_tdlServer = new TDLServer(this)
-                {
-                    
-                    ServerName = m_serverName.Text,
-                    ServerType = m_serverType.Controls.OfType<RadioButton>().Where(r => r.Checked == true).FirstOrDefault().Text.ToLower(),
-                    MaxPlayers = (int)m_playerNumber.Value,
-                    Visibility = m_serverVisibility.Controls.OfType<RadioButton>().Where(r => r.Checked == true).FirstOrDefault().Text.ToLower()
-                };
-
-                m_tdlServer.Start();
-                m_chatLogFileNotifier = new LogFileNotifier(m_tdlServer.ChatLogFile, m_chatLog);
-                m_serverLogFileNotifier = new LogFileNotifier(m_tdlServer.ServerLogFile, m_serverOutput);
-
-                m_chatLog.DataBindings.Add("Text", m_chatLogFileNotifier, "FileContent");
-                m_serverOutput.DataBindings.Add("Text", m_serverLogFileNotifier, "FileContent"); 
-            }
-            catch(Exception ex)
+            if (m_customerFolderChosen)
             {
-                MessageBox.Show("TDLServerLog.txt file currently in use.\nPlease close it and try again.");
+                m_tdlServer.CustomWorldSaveDir = m_saveDirectory.Text;
             }
 
+            if (m_serverPassword.Text != String.Empty)
+            {
+                m_tdlServer.ServerPassword = m_serverPassword.Text;
+            }
+
+            if (m_adminPassword.Text != String.Empty)
+            {
+                m_tdlServer.AdminPassword = m_adminPassword.Text;
+            }
+
+            if (m_debugLog.Checked)
+            {
+                m_tdlServer.DebugMode = true;
+            }
+
+            m_tdlServer.Start();
+
+            //For Debugging
+            //this.Text += m_tdlServer.ServerArguments;
+
+            m_chatLogFileNotifier = new LogFileNotifier(m_tdlServer.ChatLogFile, m_chatLog);
+            m_serverLogFileNotifier = new LogFileNotifier(m_tdlServer.ServerLogFile, m_serverOutput);
+
+            //Updates the Server information and chat log on the GUI when the files are updated.
+            m_chatLog.DataBindings.Add("Text", m_chatLogFileNotifier, "FileContent");
+            m_serverOutput.DataBindings.Add("Text", m_serverLogFileNotifier, "FileContent");
         }
 
 
@@ -115,29 +168,70 @@ namespace TDL_Alpha_Server
             //btnOk.Enabled = true;
         }
 
+        /// <summary>
+        /// Handles when the number of players in the server changes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_playerNumber_ValueChanged(object sender, EventArgs e)
         {
             m_playerConnected.Text = String.Format("{0}/{1}", 0 , (int)m_playerNumber.Value);
         }
 
+        /// <summary>
+        /// Updates the GUI when set as a public server.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_publicServer_CheckedChanged(object sender, EventArgs e)
         {
             m_playerNumber.Enabled = true;
         }
 
+        /// <summary>
+        /// Updates the GUI when set as a solo server.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_soloOption_CheckedChanged(object sender, EventArgs e)
         {
             m_playerNumber.Value = 1;
         }
 
+        /// <summary>
+        /// Closes off the TDL Server when we close this application.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_serverStarter_FormClosing(object sender, FormClosingEventArgs e)
         {
             if(m_tdlServer != null)
                 m_tdlServer.Dispose();
         }
 
+        /// <summary>
+        /// Stops the server and resets back to a fresh state.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_stopServer_Click(object sender, EventArgs e)
         {
+            KillServer();
+            ResetUI();
+        }
+
+        /// <summary>
+        /// Kills the server, but doesn't alter UI.
+        /// </summary>
+        private void KillServer()
+        {
+            //Destroy old server and set to null, ready for a new server
+            if (m_tdlServer != null)
+            {
+                m_tdlServer.Dispose();
+                m_tdlServer = null;
+            }
+
             m_startServer.Enabled = true;
             m_stopServer.Enabled = false;
 
@@ -145,14 +239,13 @@ namespace TDL_Alpha_Server
             m_serverOutput.Clear();
             m_chatLog.DataBindings.Clear();
             m_serverOutput.DataBindings.Clear();
+        }
 
-            //Destroy old server and set to null, ready for a new server
-            if (m_tdlServer != null)
-            { 
-                m_tdlServer.Dispose();
-                m_tdlServer = null;
-            }
-
+        /// <summary>
+        /// Resets the UI components.
+        /// </summary>
+        private void ResetUI()
+        {
             //Set things back to default, ready to run again...
             m_options.Enabled = true;
             m_playerList.Items.Clear();
@@ -163,17 +256,28 @@ namespace TDL_Alpha_Server
             m_playerDeaths.Text = "0";
             m_playerConnected.Text = "0";
             m_worldSeed.Text = String.Empty;
+
+            m_serverPassword.Clear();
+            m_adminPassword.Clear();
+
+            m_saveDirectory.Text = "Default Directory";
+            m_customerFolderChosen = false;
         }
 
+        /// <summary>
+        /// Called when the data in the Server Output text box changes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_serverOutput_TextChanged(object sender, EventArgs e)
         {
             m_serverOutput.SelectionStart = m_serverOutput.TextLength;
             m_serverOutput.ScrollToCaret();
             
-            //Can't htink of a better place to update this code yet
+            //Can't think of a better place to update this code yet
             m_zombieKills.Text = m_tdlServer.ZombieKillCount.ToString();
             m_playerDeaths.Text = m_tdlServer.PlayerDeathCount.ToString();
-            m_playerConnected.Text = m_tdlServer.ConnectedPlayersCount.ToString();
+            m_playerConnected.Text = String.Format("{0}/{1}", m_tdlServer.ConnectedPlayers.Count.ToString(), m_tdlServer.MaxPlayers.ToString());
 
             //If we have a mismatch count between how many players the server says it has an how many the GUI says it has we update
             //the list accordingly
@@ -189,12 +293,22 @@ namespace TDL_Alpha_Server
             }
         }
 
+        /// <summary>
+        /// Called when the chat log text changes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_chatLog_TextChanged(object sender, EventArgs e)
         {
             m_chatLog.SelectionStart = m_chatLog.TextLength;
             m_chatLog.ScrollToCaret();
         }
 
+        /// <summary>
+        /// Opens player GUI when the player name is double clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void m_playerList_DoubleClick(object sender, EventArgs e)
         {
             if (m_playerList.SelectedItem != null)
@@ -209,6 +323,24 @@ namespace TDL_Alpha_Server
                                                     selectedPlayer.ZombieKills));
                 }
             }
+        }
+
+        /// <summary>
+        /// Updates the folder where the log files will be saved.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void m_saveFolder_Click(object sender, EventArgs e)
+        {
+            var browser = new FolderBrowserDialog();
+            DialogResult result = browser.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                m_saveDirectory.Text = browser.SelectedPath;
+                m_customerFolderChosen = true;
+            }
+
         }
     }
 }
